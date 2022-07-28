@@ -7,7 +7,7 @@ DOI: 10.1039/C3DT50599E
 """
 
 import MDAnalysis as mda
-#from ase.io import read
+from ase import Atoms
 import numpy as np
 import pandas
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ from sklearn.metrics import euclidean_distances
 #########################
 # VARIABLES
 radius_probe = 1.4
-n_sphere_point = 100
+n_sphere_point = 1000
 VisualizeSphere = False
 #########################
 # VALIDATION
@@ -122,10 +122,15 @@ for i in range(0, pos.shape[0]):
     area = area_per_point*n_accessible_point*radius**2 
     areas.loc[i] = [area, atoms[i], mol[i].segid, mol[i].resname, mol[i].resid, vdw_radii.at[atoms[i], "vdw_radius"]]
 
-if 1==1:
+if 1==0:
     ax = plt.figure().add_subplot(projection='3d')
     ax.scatter3D(*accessible_points.T)
     plt.show()
+elif 1 == 1: # Connolly surface
+    atom_types = list(["C"]*accessible_points.shape[0]) + list(atoms)
+    output_pos = np.vstack((accessible_points, pos))
+    ConnollySurface = Atoms(atom_types, output_pos)
+    ConnollySurface.write("ConnollySurface.xyz")
 
 
 print(areas)
