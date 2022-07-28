@@ -88,8 +88,8 @@ class SASACRUNCH:
                 for j in cycled_indices:
                     pos_j = self.pos[neighbor_indices[j]]
                     radius_j = self.radius_probe + self.vdw_radii.at[self.atoms[j], "vdw_radius"]
-                    diff = np.linalg.norm(pos_j - test_point)
-                    if diff**2 < radius_j**2:
+                    dist = np.linalg.norm(pos_j - test_point)
+                    if dist < radius_j:
                         j_closest_neighbor = j
                         is_accessible = False
                         break
@@ -175,12 +175,13 @@ class sssSASA(SASACRUNCH):
 
 
 if __name__ == "__main__":
-    calc = sssSASA("Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb", n_sphere_point=10)
+    calc = sssSASA("Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb", n_sphere_point=100)
     
-    calc.double_cubic_lattice_method()
+    #calc.double_cubic_lattice_method()
 
     
-    #calc.calcSASA()
+    calc.calcSASA()
+    print(calc.areas["area"].sum())
     #calc.writeout.writeConnolly()
     
     #print(calc.areas)
@@ -191,6 +192,6 @@ if __name__ == "__main__":
 #         print(f"Mean {typ} area:", calc.areas[calc.areas["atom"] == typ]["area"].mean())
 # =============================================================================
         
-    #print(calc.areas["area"].sum())
+    #
 
  
