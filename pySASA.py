@@ -26,14 +26,22 @@ from sklearn.metrics import euclidean_distances
 #########################
 
 
-class sssSASA:
-
+        
+class SASACRUNCH:
+    def Fibb(self, n):
+        goldenRatio = (1 + 5**0.5)/2
+        i = np.arange(0, n)
+        theta = 2 *np.pi * i / goldenRatio
+        phi = np.arccos(1 - 2*(i+0.5)/n)
+        x, y, z = np.cos(theta) * np.sin(phi), np.sin(theta) * np.sin(phi), np.cos(phi)
+        points = np.array((x,y,z)).T
+        return points
     def generate_sphere_points(self, n):
        """
        Returns list of coordinates on a sphere using the Golden-
        Section Spiral algorithm.
        """
-       points = []
+       points = np.ndarray((n, 3))
        inc = np.pi * (3 - np.sqrt(5))
        offset = 2 / float(n)
        for k in range(int(n)):
@@ -41,7 +49,7 @@ class sssSASA:
           r = np.sqrt(1 - y*y)
           phi = k * inc
           point = np.array((np.cos(phi)*r, y, np.sin(phi)*r), dtype=np.float64, copy=True)
-          points.append(point)
+          points[k] = point
        return points
     
     def find_neighbor_indices(self, atoms, coords, probe, k):
@@ -58,15 +66,6 @@ class sssSASA:
             if d[0][i] < radius + radius_i + probe: #+probe twice?
                 neighbor_indices.append(i)
         return neighbor_indices
-
-    def VisSphere(self):
-        x = np.vstack(self.sphere_points)[:,0]
-        y = np.vstack(self.sphere_points)[:,1]
-        z = np.vstack(self.sphere_points)[:,2]
-        ax = plt.figure().add_subplot(projection='3d')
-        #ax.scatter3D(x, y, z, c=z, cmap='Greens')
-        ax.scatter3D(*self.sphere_points.T)
-        plt.show()
         
     def calcSASA(self):
         for i in range(0, self.pos.shape[0]):
@@ -103,13 +102,59 @@ class sssSASA:
                                  self.mol[i].resname, self.mol[i].resid, 
                                  self.vdw_radii.at[self.atoms[i], "vdw_radius"]]
     
+
+    def double_cubic_lattice_method(self):
+        self.atomtic_distances = euclidean_distances(self.pos, self.pos)
+        self.radii = self.radius_probe + self.vdw_radii.loc[self.atoms]["vdw_radius"].values
+        
+        #There must be a faster way to do the following within numpy
+        self.surfaces = np.ndarray((self.radii.shape[0], self.n_sphere_point, 3))
+        for i in range(self.radii.shape[0]):
+            self.surfaces[i] = (self.sphere_points * self.radii[i]) + self.pos[i]
+        self.surfaces = self.surfaces.reshape(-1, 3)
+        
+        #Remove points that are inaccessible
+        self.surface_distances = euclidean_distances(self.surfaces, self.surfaces)
+        np.fill_diagonal(self.surface_distances, 100)
+        
+        self.accessible = np.ones((self.surfaces.shape[0]), dtype=np.bool_)
+        
+        #can get the table of sums by multiplying, deviding
+        self.cutoffs = np.add.outer(self.radii, self.radii)
+        self.cutoffs += self.radius_probe
+        
+        for i in range(self.surface_distances.shape[0]):
+            self.cuff = self.cutoffs[np.floor(i/self.pos.shape[0]).astype(np.int64)]
+            break
+        
+        
+# =============================================================================
+#         for point in self.sphere_points:
+#             is_accessible = True
+#             # Move sphere point to atomic coord and scale by atomic radius
+#             test_point = (point*radius) + self.pos[i]
+#             print(test_point)
+#             break
+# =============================================================================
+        
+
+class sssSASA(SASACRUNCH): 
     def writeConnolly(self, fname="ConnollySurface.xyz"):
         atom_types = list(["C"]*self.accessible_points.shape[0]) + list(self.atoms)
         output_pos = np.vstack((self.accessible_points, self.pos))
         ConnollySurface = Atoms(atom_types, output_pos)
         ConnollySurface.write(fname)
         
-    def __init__(self, infile):
+    def VisSphere(self):
+        x = np.vstack(self.sphere_points)[:,0]
+        y = np.vstack(self.sphere_points)[:,1]
+        z = np.vstack(self.sphere_points)[:,2]
+        ax = plt.figure().add_subplot(projection='3d')
+        #ax.scatter3D(x, y, z, c=z, cmap='Greens')
+        ax.scatter3D(*self.sphere_points.T)
+        plt.show()
+        
+    def __init__(self, infile, n_sphere_point = 150):
         martini_radii = pandas.DataFrame()
         self.vdw_radii = pandas.read_csv("Alvarez2013_vdwradii.csv", index_col=0)
         U = mda.Universe(infile)
@@ -119,22 +164,26 @@ class sssSASA:
         self.atoms = self.mol.types
         
         self.radius_probe = 1.4
-        self.n_sphere_point = 85
+        self.n_sphere_point = n_sphere_point
 
         self.sphere_points = self.generate_sphere_points(self.n_sphere_point)
         self.area_per_point = 4.0 * np.pi / len(self.sphere_points) # Scaled in the loop by the vdw_radii
         self.areas = pandas.DataFrame(columns=["area", "atom", "segid", "resname", "resid", "vdw_radius"])
 
         self.accessible_points = np.ndarray((0, 3))
-        
-        
+        self.Fibb_points = self.Fibb(self.n_sphere_point)
+
 
 if __name__ == "__main__":
-    calc = sssSASA("Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
+    calc = sssSASA("Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb", n_sphere_point=10)
     
-    calc.calcSASA()
+    calc.double_cubic_lattice_method()
+
     
-    print(calc.areas)
+    #calc.calcSASA()
+    #calc.writeout.writeConnolly()
+    
+    #print(calc.areas)
 
 # =============================================================================
 #     for typ in np.unique(calc.areas["atom"]):
@@ -142,6 +191,6 @@ if __name__ == "__main__":
 #         print(f"Mean {typ} area:", calc.areas[calc.areas["atom"] == typ]["area"].mean())
 # =============================================================================
         
-    print(calc.areas["area"].sum())
+    #print(calc.areas["area"].sum())
 
  
