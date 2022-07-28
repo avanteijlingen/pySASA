@@ -30,28 +30,7 @@ VisualizeSphere = False
 # Number of buried atoms     =           12
 #########################
 
-def vector(*args):
-  """
-  Creates a new vector
 
-  Args:
-    None: returns zero vector
-    v (vector): returns copy of v
-    x, y, z: returns (x, y, z)
-  """
-  n_arg = len(args)
-  if n_arg == 0:
-    return np.zeros(3, dtype=np.float)
-  if n_arg == 1:
-    data = args[0]
-    if len(data) == 3:
-      return np.array(data, copy=True)
-    raise TypeError('vector() with 1 argument must have 3 elements')
-  if n_arg == 3:
-    return np.array(args, dtype=np.float, copy=True)
-  else:
-    raise TypeError('vector() takes 0, 1 or 3 arguments')
-    
 def generate_sphere_points(n):
    """
    Returns list of coordinates on a sphere using the Golden-
@@ -64,7 +43,8 @@ def generate_sphere_points(n):
       y = k * offset - 1 + (offset / 2)
       r = np.sqrt(1 - y*y)
       phi = k * inc
-      points.append(v3numpy.vector(np.cos(phi)*r, y, np.sin(phi)*r))
+      point = np.array((np.cos(phi)*r, y, np.sin(phi)*r), dtype=np.float64, copy=True)
+      points.append(point)
    return points
 
 def find_neighbor_indices(atoms, coords, probe, k):
@@ -98,9 +78,8 @@ atoms = mol.types
 
 #def calculate_asa(atoms, probe, n_sphere_point):
 sphere_points = generate_sphere_points(n_sphere_point)
-area_per_point = const = 4.0 * np.pi / len(sphere_points)
+area_per_point = 4.0 * np.pi / len(sphere_points) # Scaled in the loop by the vdw_radii
 areas = pandas.DataFrame(columns=["area", "atom", "segid", "resname", "resid", "vdw_radius"])
-result = 0
 
 if VisualizeSphere:
     x = np.vstack(sphere_points)[:,0]
@@ -110,6 +89,7 @@ if VisualizeSphere:
     ax.scatter3D(x, y, z, c=z, cmap='Greens');
     plt.show()
 
+accessible_points = np.ndarray((0, 3))
 for i in range(0, pos.shape[0]):
     neighbor_indices = find_neighbor_indices(atoms, pos, radius_probe, i)
     n_neighbor = len(neighbor_indices)
@@ -137,12 +117,23 @@ for i in range(0, pos.shape[0]):
                 break
         if is_accessible:
             n_accessible_point += 1
+            accessible_points = np.vstack((accessible_points, test_point))
         
-    area = const*n_accessible_point*radius*radius 
-    result+=area
+    area = area_per_point*n_accessible_point*radius**2 
     areas.loc[i] = [area, atoms[i], mol[i].segid, mol[i].resname, mol[i].resid, vdw_radii.at[atoms[i], "vdw_radius"]]
+
+if 1==1:
+    ax = plt.figure().add_subplot(projection='3d')
+    ax.scatter3D(*accessible_points.T)
+    plt.show()
+
+
 print(areas)
+
+for typ in np.unique(areas["atom"]):
+    print(f"Total {typ} area:", areas[areas["atom"] == typ]["area"].sum())
+    print(f"Mean {typ} area:", areas[areas["atom"] == typ]["area"].mean())
     
-print(result)
+print(areas["area"].sum())
 
  
