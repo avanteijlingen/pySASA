@@ -9,7 +9,7 @@ DOI: 10.1039/C3DT50599E
 import MDAnalysis as mda
 from ase import Atoms
 import numpy as np
-import pandas
+import pandas, time, sys, os
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from sklearn.metrics import euclidean_distances
@@ -67,8 +67,15 @@ class SASACRUNCH:
                 neighbor_indices.append(i)
         return neighbor_indices
         
-    def calcSASA(self):
+    def calcSASA(self, Frame=-1):
+        self.U.trajectory[Frame]
+        st = time.time()
         for i in range(0, self.pos.shape[0]):
+            if i%10 == 0 and i > 0:
+                dt = time.time() - st
+                print(i, "/", self.pos.shape[0], round(((dt/i) * self.pos.shape[0]) / 60), "mins remaining", round((dt/i), 2), "s per iter")
+                
+                
             neighbor_indices = self.find_neighbor_indices(self.atoms, self.pos, self.radius_probe, i)
             n_neighbor = len(neighbor_indices)
             j_closest_neighbor = 0
@@ -154,12 +161,11 @@ class sssSASA(SASACRUNCH):
         ax.scatter3D(*self.sphere_points.T)
         plt.show()
         
-    def __init__(self, infile, n_sphere_point = 150):
+    def __init__(self, infiles, n_sphere_point = 150, sel = "not resname H2O and not resname W and not resname CL and not resname NA"):
         martini_radii = pandas.DataFrame()
-        self.vdw_radii = pandas.read_csv("Alvarez2013_vdwradii.csv", index_col=0)
-        U = mda.Universe(infile)
-        self.mol = U.select_atoms("all")
-        #mol = read("HCl.pdb")
+        self.vdw_radii = pandas.read_csv("Martini_vdwradii.csv", index_col=0)
+        self.U = mda.Universe(*infiles)
+        self.mol = self.U.select_atoms(sel)
         self.pos = self.mol.positions
         self.atoms = self.mol.types
         
@@ -173,15 +179,60 @@ class sssSASA(SASACRUNCH):
         self.accessible_points = np.ndarray((0, 3))
         self.Fibb_points = self.Fibb(self.n_sphere_point)
 
-
 if __name__ == "__main__":
-    calc = sssSASA("Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb", n_sphere_point=100)
     
-    #calc.double_cubic_lattice_method()
+    jobs = ["/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH3.0/Box_psfgen",
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH3.0_3/namdcph.md",
+            
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH5.0/Box_psfgen",
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH5.0_2/namdcph.md",
+            
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH7.0/Box_psfgen",
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH7.0_5/namdcph.md",
+            
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/Box_psfgen",
 
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH3.0_4/namdcph.md",
+            
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH5.0_5/namdcph.md",
+
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH7.0_6/namdcph.md",
+
+            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH10.0_4/namdcph.md",
+            
+            ]
     
-    calc.calcSASA()
-    print(calc.areas["area"].sum())
+    for job in jobs:
+        oname = "FKELK" if "ELK" in job else "FK"
+        oname = oname + "-" + "-".join(job.split("/")[-2:])
+        oname = oname.replace("1200FmocFFK(NH2)_CC_FS", "1200FmocFFKinitial")
+        #print(oname, os.path.exists(f"{job}.pdb"), os.path.exists(f"{job}.psf"))
+        if "pH3" in oname or "pH5" in oname or "pH7" in oname:
+            continue
+        if os.path.exists(f"sssSASAs/{oname}.csv"):
+            print("Exists:", f"sssSASAs/{oname}.csv")
+            continue
+        print(oname)
+        
+        calc = sssSASA(infiles = [f"{job}.psf", f"{job}.pdb"], n_sphere_point=10)
+        
+        a="""
+        for typ in np.unique(calc.U.atoms.types):
+            if typ[0] == "S":
+                print(f"{typ},4.3")
+            else:
+                print(f"{typ},4.7")
+        #"""
+        
+        frame = 0
+
+        calc.calcSASA(Frame = frame)
+        calc.areas.to_csv(f"sssSASAs/{oname}.csv")
+        
+        
+        print(calc.areas["area"].sum())
+    
+    
     #calc.writeout.writeConnolly()
     
     #print(calc.areas)
@@ -191,7 +242,4 @@ if __name__ == "__main__":
 #         print(f"Total {typ} area:", calc.areas[calc.areas["atom"] == typ]["area"].sum())
 #         print(f"Mean {typ} area:", calc.areas[calc.areas["atom"] == typ]["area"].mean())
 # =============================================================================
-        
-    #
 
- 
