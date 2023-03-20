@@ -181,26 +181,7 @@ class sssSASA(SASACRUNCH):
 
 if __name__ == "__main__":
     
-    jobs = ["/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH3.0/Box_psfgen",
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH3.0_3/namdcph.md",
-            
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH5.0/Box_psfgen",
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH5.0_2/namdcph.md",
-            
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH7.0/Box_psfgen",
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS_15ELK/pH7.0_5/namdcph.md",
-            
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/Box_psfgen",
-
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH3.0_4/namdcph.md",
-            
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH5.0_5/namdcph.md",
-
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH7.0_6/namdcph.md",
-
-            "/users/rkb19187/Desktop/Constant_pH/1200FmocFFK(NH2)_CC_FS/pH10.0_4/namdcph.md",
-            
-            ]
+    jobs = ["Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe"]
     
     for job in jobs:
         oname = "FKELK" if "ELK" in job else "FK"
@@ -214,7 +195,8 @@ if __name__ == "__main__":
             continue
         print(oname)
         
-        calc = sssSASA(infiles = [f"{job}.psf", f"{job}.pdb"], n_sphere_point=10)
+        #calc = sssSASA(infiles = [f"{job}.psf", f"{job}.pdb"], n_sphere_point=10)
+        calc = sssSASA(infiles = [f"{job}.pdb"], n_sphere_point=10)
         
         a="""
         for typ in np.unique(calc.U.atoms.types):
