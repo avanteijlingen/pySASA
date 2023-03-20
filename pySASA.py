@@ -13,7 +13,7 @@ import pandas, time, sys, os
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from sklearn.metrics import euclidean_distances
-
+from tqdm import tqdm
 
 #########################
 # VALIDATION
@@ -70,12 +70,7 @@ class SASACRUNCH:
     def calcSASA(self, Frame=-1):
         self.U.trajectory[Frame]
         st = time.time()
-        for i in range(0, self.pos.shape[0]):
-            if i%10 == 0 and i > 0:
-                dt = time.time() - st
-                print(i, "/", self.pos.shape[0], round(((dt/i) * self.pos.shape[0]) / 60), "mins remaining", round((dt/i), 2), "s per iter")
-                
-                
+        for i in tqdm(range(0, self.pos.shape[0])):
             neighbor_indices = self.find_neighbor_indices(self.atoms, self.pos, self.radius_probe, i)
             n_neighbor = len(neighbor_indices)
             j_closest_neighbor = 0
@@ -161,9 +156,9 @@ class sssSASA(SASACRUNCH):
         ax.scatter3D(*self.sphere_points.T)
         plt.show()
         
-    def __init__(self, infiles, n_sphere_point = 150, sel = "not resname H2O and not resname W and not resname CL and not resname NA"):
-        martini_radii = pandas.DataFrame()
-        self.vdw_radii = pandas.read_csv("Martini_vdwradii.csv", index_col=0)
+    def __init__(self, radii_file,  infiles, n_sphere_point = 150, sel = "not resname H2O and not resname W and not resname CL and not resname NA"):
+        #martini_radii = pandas.DataFrame()
+        self.vdw_radii = pandas.read_csv(radii_file, index_col=0)
         self.U = mda.Universe(*infiles)
         self.mol = self.U.select_atoms(sel)
         self.pos = self.mol.positions
@@ -195,8 +190,11 @@ if __name__ == "__main__":
             continue
         print(oname)
         
+        #radii_file = "Martini_vdwradii.csv"
+        radii_file = "Alvarez2013_vdwradii.csv"
+        
         #calc = sssSASA(infiles = [f"{job}.psf", f"{job}.pdb"], n_sphere_point=10)
-        calc = sssSASA(infiles = [f"{job}.pdb"], n_sphere_point=10)
+        calc = sssSASA(radii_file, infiles = [f"{job}.pdb"], n_sphere_point=10)
         
         a="""
         for typ in np.unique(calc.U.atoms.types):
@@ -209,7 +207,7 @@ if __name__ == "__main__":
         frame = 0
 
         calc.calcSASA(Frame = frame)
-        calc.areas.to_csv(f"sssSASAs/{oname}.csv")
+        calc.areas.to_csv(f"{oname}.csv")
         
         
         print(calc.areas["area"].sum())
