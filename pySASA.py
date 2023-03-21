@@ -179,15 +179,12 @@ if __name__ == "__main__":
     jobs = ["Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe"]
     
     for job in jobs:
-        oname = "FKELK" if "ELK" in job else "FK"
-        oname = oname + "-" + "-".join(job.split("/")[-2:])
-        oname = oname.replace("1200FmocFFK(NH2)_CC_FS", "1200FmocFFKinitial")
-        #print(oname, os.path.exists(f"{job}.pdb"), os.path.exists(f"{job}.psf"))
-        if "pH3" in oname or "pH5" in oname or "pH7" in oname:
-            continue
-        if os.path.exists(f"sssSASAs/{oname}.csv"):
-            print("Exists:", f"sssSASAs/{oname}.csv")
-            continue
+        oname = f"{job}.csv"
+# =============================================================================
+#         if os.path.exists(f"{oname}.csv"):
+#             print("Exists:", f"{oname}.csv")
+#             continue
+# =============================================================================
         print(oname)
         
         #radii_file = "Martini_vdwradii.csv"
