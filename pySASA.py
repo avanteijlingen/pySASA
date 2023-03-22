@@ -29,11 +29,13 @@ from tqdm import tqdm
         
 class SASACRUNCH:
     def Fibb(self, n):
-        goldenRatio = (1 + 5**0.5)/2
+        goldenRatio = (1 + 5**0.5)/2 #\phi = golden ratio
         i = np.arange(0, n)
         theta = 2 *np.pi * i / goldenRatio
         phi = np.arccos(1 - 2*(i+0.5)/n)
         x, y, z = np.cos(theta) * np.sin(phi), np.sin(theta) * np.sin(phi), np.cos(phi)
+        #print("theta", theta, theta.shape[0])
+        #print("phi", phi, phi.shape[0])
         points = np.array((x,y,z)).T
         return points
     def generate_sphere_points(self, n):
@@ -78,6 +80,7 @@ class SASACRUNCH:
             
             n_accessible_point = 0
             for point in self.sphere_points:
+                
                 is_accessible = True
                 # Move sphere point to atomic coord and scale by atomic radius
                 test_point = (point*radius) + self.pos[i]
@@ -191,7 +194,7 @@ if __name__ == "__main__":
         radii_file = "Alvarez2013_vdwradii.csv"
         
         #calc = sssSASA(infiles = [f"{job}.psf", f"{job}.pdb"], n_sphere_point=10)
-        calc = sssSASA(radii_file, infiles = [f"{job}.pdb"], n_sphere_point=10)
+        calc = sssSASA(radii_file, infiles = [f"{job}.pdb"], n_sphere_point=66)
         
         a="""
         for typ in np.unique(calc.U.atoms.types):
@@ -204,7 +207,8 @@ if __name__ == "__main__":
         frame = 0
 
         calc.calcSASA(Frame = frame)
-        calc.areas.to_csv(f"{oname}.csv")
+        print()
+        calc.areas.to_csv(oname)
         
         
         print(calc.areas["area"].sum())
