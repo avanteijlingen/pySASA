@@ -179,7 +179,8 @@ class sssSASA(SASACRUNCH):
 
 if __name__ == "__main__":
     
-    jobs = ["Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe"]
+    jobs = ["FF_2.1/FF_min"]
+    #jobs = ["FF_2.1/FF_eq_centred"]
     
     for job in jobs:
         oname = f"{job}.csv"
@@ -190,11 +191,11 @@ if __name__ == "__main__":
 # =============================================================================
         print(oname)
         
-        #radii_file = "Martini_vdwradii.csv"
-        radii_file = "Alvarez2013_vdwradii.csv"
+        radii_file = "Martini_vdwradii.csv"
+        #radii_file = "Alvarez2013_vdwradii.csv"
         
         #calc = sssSASA(infiles = [f"{job}.psf", f"{job}.pdb"], n_sphere_point=10)
-        calc = sssSASA(radii_file, infiles = [f"{job}.pdb"], n_sphere_point=66)
+        calc = sssSASA(radii_file, infiles = [f"{job}.gro"], n_sphere_point=24)
         
         a="""
         for typ in np.unique(calc.U.atoms.types):
@@ -214,7 +215,7 @@ if __name__ == "__main__":
         print(calc.areas["area"].sum())
     
     
-    #calc.writeout.writeConnolly()
+        calc.writeConnolly()
     
     #print(calc.areas)
 
