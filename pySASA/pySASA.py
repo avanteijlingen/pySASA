@@ -5,6 +5,7 @@ Created on Fri Sep 29 11:45:50 2023
 @author: Alex
 """
 import ase
+from ase import Atoms
 import pandas
 import numpy as np
 from sklearn.metrics import euclidean_distances
@@ -55,6 +56,8 @@ class pysasa:
         return neighbor_indices
     
     def calculate(self, atoms, coordinates, n_sphere_point=24):
+        self.atoms = atoms
+        self.coordinates = coordinates
         self.accessible_points = np.ndarray((0, 3))
         self.sphere_points = self.generate_sphere_points(n_sphere_point)
         self.area_per_point = 4.0 * np.pi / len(self.sphere_points) # Scaled in the loop by the vdw_radii
@@ -88,12 +91,17 @@ class pysasa:
                         break
                 if is_accessible:
                     n_accessible_point += 1
-                    accessible_points = np.vstack((self.accessible_points, test_point))
+                    self.accessible_points = np.vstack((self.accessible_points, test_point))
                 
             area = self.area_per_point*n_accessible_point*radius**2 
             self.areas.loc[i] = [area, atoms[i], self.vdw_radii.at[atoms[i], "vdw_radius"]]
         return self.areas["area"].sum()
             
+    def writeConnolly(self, fname="ConnollySurface.xyz"):
+        atom_types = list(["C"]*self.accessible_points.shape[0]) + list(self.atoms)
+        ConnollySurface = Atoms(atom_types,np.vstack((self.accessible_points, self.coordinates)))
+        ConnollySurface.write(fname)
+        
     def __init__(self, radii_csv):
         self.vdw_radii = pandas.read_csv(radii_csv, index_col=0)
         self.radius_probe = 1.4

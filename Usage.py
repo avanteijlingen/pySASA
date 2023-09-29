@@ -38,15 +38,14 @@ import matplotlib.pyplot as plt
 # =============================================================================
  
 mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
+#mol = read("ExampleData/CF3CH3.xyz")
 
 calc = pysasa.pysasa(radii_csv="ExampleData/Alvarez2013_vdwradii.csv")
 
-X = np.linspace(3, 250, 10).astype(np.int64)
-Y = []
-for x in X:
-    sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=x)
-    Y.append(sasa)
+sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=500)
+print("\n")
+print("SASA:", sasa)
 
-#print("SASA:", sasa)
+print(calc.areas)
 
-plt.plot(X, Y)
+calc.writeConnolly("ConnollySurface.xyz")
