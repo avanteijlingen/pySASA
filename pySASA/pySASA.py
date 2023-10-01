@@ -98,7 +98,7 @@ class pysasa:
         return self.areas["area"].sum()
             
     def writeConnolly(self, fname="ConnollySurface.xyz"):
-        atom_types = list(["C"]*self.accessible_points.shape[0]) + list(self.atoms)
+        atom_types = list(["He"]*self.accessible_points.shape[0]) + list(self.atoms)
         ConnollySurface = Atoms(atom_types,np.vstack((self.accessible_points, self.coordinates)))
         ConnollySurface.write(fname)
         
