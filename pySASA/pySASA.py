@@ -63,7 +63,10 @@ class pysasa:
         self.area_per_point = 4.0 * np.pi / len(self.sphere_points) # Scaled in the loop by the vdw_radii
         self.areas = pandas.DataFrame(columns=["area", "atom", "vdw_radius"])
         
-        for i in tqdm(range(0, coordinates.shape[0])):
+        mol = Atoms(atoms, coordinates)
+        
+        #print("Doing hydrogen first!")
+        for i in tqdm(np.argsort(mol.numbers)):
             neighbor_indices = self.find_neighbor_indices(atoms, coordinates, self.radius_probe, i)
             n_neighbor = len(neighbor_indices)
             j_closest_neighbor = 0
@@ -95,6 +98,7 @@ class pysasa:
                 
             area = self.area_per_point*n_accessible_point*radius**2 
             self.areas.loc[i] = [area, atoms[i], self.vdw_radii.at[atoms[i], "vdw_radius"]]
+        self.areas = self.areas.sort_index()
         return self.areas["area"].sum()
             
     def writeConnolly(self, fname="ConnollySurface.xyz"):
@@ -105,4 +109,6 @@ class pysasa:
     def __init__(self, radii_csv):
         self.vdw_radii = pandas.read_csv(radii_csv, index_col=0)
         self.radius_probe = 1.4
+        
+
         

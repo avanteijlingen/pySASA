@@ -42,7 +42,7 @@ mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
 
 calc = pysasa.pysasa(radii_csv="ExampleData/Alvarez2013_vdwradii.csv")
 
-sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=500)
+sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=50)
 print("\n")
 print("SASA:", sasa)
 
