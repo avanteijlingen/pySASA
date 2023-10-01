@@ -1,14 +1,14 @@
 from setuptools import setup
 
 setup(
-    name='pySASA',
+    name='pysasa',
     version='0.0.1',
     description='A module for calculating the solvent accessible surface area of molecules',
     url='https://github.com/avanteijlingen/pySASA',
     author='Alexander van Teijlingen',
     author_email='a.vant@linuxmail.org',
     license='BSD 2-clause',
-    packages=['pySASA'],
+    packages=['pysasa'],
     install_requires=['ase',
                       'pandas',
                       'numpy',
