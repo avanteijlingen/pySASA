@@ -37,8 +37,9 @@ import matplotlib.pyplot as plt
 #  Number of atoms with ASP=0 =           76
 # =============================================================================
  
-mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
+#mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
 #mol = read("ExampleData/CF3CH3.xyz")
+mol = read("C:/Users/Alex/Documents/GitHub/ANI-based-carbene-pKa-prediction/qmspin_extra/Training18.xyz")
 
 calc = pysasa.pysasa(radii_csv="ExampleData/Alvarez2013_vdwradii.csv")
 
