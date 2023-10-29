@@ -66,8 +66,8 @@ class pysasa:
         mol = Atoms(atoms, coordinates)
         
         #print("Doing hydrogen first!")
-        #for i in tqdm(np.argsort(mol.numbers)):
-        for i in np.argsort(mol.numbers):
+        for i in tqdm(np.argsort(mol.numbers)):
+        #for i in np.argsort(mol.numbers):
             neighbor_indices = self.find_neighbor_indices(atoms, coordinates, self.radius_probe, i)
             n_neighbor = len(neighbor_indices)
             j_closest_neighbor = 0
