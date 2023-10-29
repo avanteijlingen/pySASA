@@ -10,6 +10,9 @@ from ase import Atoms
 from ase.io import read
 import numpy as np
 import matplotlib.pyplot as plt
+import MDAnalysis as mda
+import sys, pandas
+from sklearn.metrics import euclidean_distances
 
 # =============================================================================
 # Validation
@@ -36,17 +39,38 @@ import matplotlib.pyplot as plt
 #  Number of buried atoms     =           12
 #  Number of atoms with ASP=0 =           76
 # =============================================================================
- 
-#mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
-#mol = read("ExampleData/CF3CH3.xyz")
-mol = read("C:/Users/Alex/Documents/GitHub/ANI-based-carbene-pKa-prediction/qmspin_extra/Training18.xyz")
 
-calc = pysasa.pysasa(radii_csv="ExampleData/Alvarez2013_vdwradii.csv")
 
-sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=50)
-print("\n")
-print("SASA:", sasa)
+# =============================================================================
+# #mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
+# #mol = read("ExampleData/CF3CH3.xyz")
+# mol = read("C:/Users/Alex/Documents/GitHub/ANI-based-carbene-pKa-prediction/qmspin_extra/Training18.xyz")
+# 
+# calc = pysasa.pysasa(radii_csv="ExampleData/Alvarez2013_vdwradii.csv")
+# 
+# sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=50)
+# print("\n")
+# print("SASA:", sasa)
+# 
+# print(calc.areas)
+# 
+# calc.writeConnolly("ConnollySurface.xyz")
+# =============================================================================
 
-print(calc.areas)
+calc = pysasa.pysasa(radii_csv="ExampleData/Martini_vdwradii.csv")
 
-calc.writeConnolly("ConnollySurface.xyz")
+U = mda.Universe("ExampleData/Alvaro/PartEq.gro")
+protein = U.select_atoms("name BB SC1 SC2 SC3")
+
+d = euclidean_distances(protein.positions.astype(np.float16), protein.positions.astype(np.float16))
+
+sys.exit()
+#mol = read("ExampleData/Alvaro/PartEq.gro")
+mol = Atoms([x[0] for x in protein.names], protein.positions)
+names = np.array(mol.get_chemical_symbols(), dtype="<U2")
+# Extract just the protein
+mol = mol[np.where((names == "B") | (names == "S"))[0]]
+
+
+
+calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=24)
