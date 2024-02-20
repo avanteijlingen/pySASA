@@ -57,20 +57,44 @@ from sklearn.metrics import euclidean_distances
 # calc.writeConnolly("ConnollySurface.xyz")
 # =============================================================================
 
-calc = pysasa.pysasa(radii_csv="ExampleData/Martini_vdwradii.csv")
+# =============================================================================
+# calc = pysasa.pysasa(radii_csv="ExampleData/orca_vdwradii.csv")
+# 
+# U = mda.Universe("ExampleData/Carbenes/1_deprot.xyz")
+# protein = U.select_atoms("all")
+# 
+# d = euclidean_distances(protein.positions.astype(np.float16), protein.positions.astype(np.float16))
+# 
+# 
+# #mol = read("ExampleData/Alvaro/PartEq.gro")
+# mol = Atoms([x[0] for x in protein.names], protein.positions)
+# names = np.array(mol.get_chemical_symbols(), dtype="<U2")
+# # Extract just the protein
+# mol = mol[np.where((names == "B") | (names == "S"))[0]]
+# 
+# 
+# 
+# calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=24)
+# =============================================================================
 
-U = mda.Universe("ExampleData/Alvaro/PartEq.gro")
-protein = U.select_atoms("name BB SC1 SC2 SC3")
 
-d = euclidean_distances(protein.positions.astype(np.float16), protein.positions.astype(np.float16))
-
-sys.exit()
-#mol = read("ExampleData/Alvaro/PartEq.gro")
-mol = Atoms([x[0] for x in protein.names], protein.positions)
-names = np.array(mol.get_chemical_symbols(), dtype="<U2")
-# Extract just the protein
-mol = mol[np.where((names == "B") | (names == "S"))[0]]
-
-
-
-calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=24)
+calc = pysasa.pysasa(radii_csv="ExampleData/orca_vdwradii.csv")
+for state in ["prot", "deprot"]:
+    SASA = []
+    number_of_atoms = []
+    for i in range(1, 12):
+        if state == "deprot":
+            mol = read(f"ExampleData/Carbenes/{i}.xyz")
+        else:
+            mol = read(f"ExampleData/Carbenes/{i}+.xyz")
+        
+        sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=24)
+        print()
+        print(i, sasa)
+        print(calc.areas)
+        SASA.append(sasa)
+        number_of_atoms.append(mol.positions.shape[0])
+        plt.text(number_of_atoms[-1], SASA[-1], str(i))
+    plt.scatter(number_of_atoms, SASA, label="state")
+plt.ylabel("Surface area (DFT OPT)")
+plt.xlabel("Number of Atoms")
