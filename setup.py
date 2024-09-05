@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pysasa',
-    version='0.0.4',
+    version='0.0.5',
     description='A module for calculating the solvent accessible surface area of molecules',
     url='https://github.com/avanteijlingen/pySASA',
     author='Alexander van Teijlingen',
@@ -18,4 +18,5 @@ setup(
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3.10',
     ],
+    include_package_data=True,
 )

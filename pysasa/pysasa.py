@@ -4,7 +4,7 @@ Created on Fri Sep 29 11:45:50 2023
 
 @author: Alex
 """
-import ase
+import ase, os
 from ase import Atoms
 import pandas
 import numpy as np
@@ -107,7 +107,9 @@ class pysasa:
         ConnollySurface = Atoms(atom_types,np.vstack((self.accessible_points, self.coordinates)))
         ConnollySurface.write(fname)
         
-    def __init__(self, radii_csv):
+    def __init__(self, radii_csv=None):
+        if radii_csv is None:
+            radii_csv = os.path.join(os.path.dirname(__file__), "Alvarez2013_vdwradii.csv")
         self.vdw_radii = pandas.read_csv(radii_csv, index_col=0)
         self.radius_probe = 1.4
         
