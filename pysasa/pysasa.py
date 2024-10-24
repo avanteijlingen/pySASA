@@ -102,16 +102,16 @@ class pysasa:
         self.areas = self.areas.sort_index()
         return self.areas["area"].sum()
             
-    def writeConnolly(self, fname="ConnollySurface.xyz"):
+    def writeConnolly(self, fname="ConnollySurface.xyz", surface_only = False):
         atom_types = list(["He"]*self.accessible_points.shape[0]) + list(self.atoms)
         ConnollySurface = Atoms(atom_types,np.vstack((self.accessible_points, self.coordinates)))
         ConnollySurface.write(fname)
         
-    def __init__(self, radii_csv=None):
+    def __init__(self, radii_csv=None, radius_probe=0.3):
         if radii_csv is None:
             radii_csv = os.path.join(os.path.dirname(__file__), "Alvarez2013_vdwradii.csv")
         self.vdw_radii = pandas.read_csv(radii_csv, index_col=0)
-        self.radius_probe = 1.4
+        self.radius_probe = radius_probe
         
 
         
