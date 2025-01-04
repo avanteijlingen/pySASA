@@ -41,8 +41,8 @@ from sklearn.metrics import euclidean_distances
 # =============================================================================
 
 
-#mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
-mol = read("ExampleData/Vignesh_Rendering_100ps/II_wrapped.pdb")
+mol = read("ExampleData/Phe-Phe-Met-Ser-Ile-Arg-Phe-Phe.pdb")
+#mol = read("ExampleData/Vignesh_Rendering_100ps/II_wrapped.pdb")
 #mol = read("ExampleData/CF3CH3.xyz")
 #mol = read("C:/Users/Alex/Documents/GitHub/ANI-based-carbene-pKa-prediction/qmspin_extra/Training18.xyz")
 
@@ -51,9 +51,14 @@ radius_probe = 3
 calc = pysasa.pysasa(radii_csv="ExampleData/Alvarez2013_vdwradii.csv", radius_probe = radius_probe)
 
 sasa = calc.calculate(mol.get_chemical_symbols(), mol.positions, n_sphere_point=50)
-print("\n")
+print()
 print("SASA:", sasa)
-
+print(calc.areas)
+plt.plot(calc.areas["area"])
+sasa = calc.calculate_dcl(mol.get_chemical_symbols(), mol.positions, n_points=100)
+print()
+print("SASA (dcl):", sasa)
+plt.plot(calc.areas["area"])
 print(calc.areas)
 
 calc.writeConnolly(f"ConnollySurface_II_{radius_probe}.xyz")

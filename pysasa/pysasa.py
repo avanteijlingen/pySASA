@@ -55,6 +55,72 @@ class pysasa:
                 neighbor_indices.append(i)
         return neighbor_indices
     
+    def generate_dcl_points(self, n_points):
+        """
+        Generates points on unit sphere using Double Cubic Lattice (DCL) method.
+        Projects points from 6 faces of a cube onto sphere surface. Creates n*n grid 
+        of points on each face (n calculated from n_points), maps to cube faces at +/-1 
+        positions, then normalizes to unit sphere. Provides uniform point distribution.
+        """
+        n = int(np.ceil(np.sqrt(n_points/6)))
+        points = []
+        d = 2.0 / (2*n - 1)
+        
+        for i in range(n):
+            x = -1 + i*d*2
+            for j in range(n):
+                y = -1 + j*d*2
+                points.extend([(x,y,1), (x,y,-1), (x,1,y), 
+                              (x,-1,y), (1,x,y), (-1,x,y)])
+        
+        points = np.array(points)
+        points = np.unique(points.round(decimals=10), axis=0)
+        norms = np.linalg.norm(points, axis=1)
+        return points / norms[:, np.newaxis]
+    
+    def calculate_dcl(self, atoms, coordinates, n_points=960):
+        self.atoms = atoms
+        self.coordinates = coordinates
+        self.accessible_points = np.ndarray((0, 3))
+        self.sphere_points = self.generate_dcl_points(n_points)
+        self.area_per_point = 4.0 * np.pi / len(self.sphere_points)
+        self.areas = pandas.DataFrame(columns=["area", "atom", "vdw_radius"])
+        
+        mol = Atoms(atoms, coordinates)
+        debug_results = []
+        
+        for i in tqdm(np.argsort(mol.numbers)):
+            neighbor_indices = self.find_neighbor_indices(atoms, coordinates, self.radius_probe, i)
+            radius = self.radius_probe + self.vdw_radii.at[atoms[i], "vdw_radius"]
+            
+            test_points = (self.sphere_points * radius) + coordinates[i]
+            is_accessible = np.ones(len(test_points), dtype=bool)
+            
+            for j in neighbor_indices:
+                coords_j = coordinates[j]
+                radius_j = self.radius_probe + self.vdw_radii.at[atoms[j], "vdw_radius"]
+                dists = np.linalg.norm(coords_j - test_points, axis=1)
+                is_accessible &= (dists >= radius_j)
+            
+            n_accessible = np.sum(is_accessible)
+            self.accessible_points = np.vstack((self.accessible_points, 
+                                              test_points[is_accessible]))
+            
+            area = self.area_per_point * n_accessible * radius**2
+            self.areas.loc[i] = [area, atoms[i], self.vdw_radii.at[atoms[i], "vdw_radius"]]
+            debug_results.append({
+                'atom_idx': i,
+                'atom_type': atoms[i],
+                'n_points': len(test_points),
+                'n_accessible': n_accessible,
+                'radius': radius,
+                'area': area
+            })
+        
+        self.areas = self.areas.sort_index()
+        self.debug_results = pandas.DataFrame(debug_results)
+        return self.areas["area"].sum()
+
     def calculate(self, atoms, coordinates, n_sphere_point=24):
         self.atoms = atoms
         self.coordinates = coordinates
